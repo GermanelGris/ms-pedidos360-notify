@@ -1,47 +1,16 @@
 # ms-pedidos360-notify
 
-Microservicio de **notificaciones** de Pedidos360. No es público: es un **consumidor de RabbitMQ** que procesa comandos de forma asíncrona.
+> 🚧 **En construcción.** Fuera del alcance de la EP1: por ahora solo contiene los DTO (contratos) del servicio.
 
-## Topología (6 colas, 3 flujos)
+Microservicio de **notificaciones** de Pedidos360. Enviará email o push al cliente con el estado de su pedido, de forma asíncrona. No expondrá API pública.
 
-| Cola principal | Propósito | DLQ |
+## Contenido actual
+
+| Tipo | Clase | Descripción |
 |---|---|---|
-| `q.cmd.email` | Email / push al cliente con el estado del pedido | `q.cmd.email.dlq` |
-| `q.cmd.kitchen` | Ticket de cocina al aceptar un pedido | `q.cmd.kitchen.dlq` |
-| `q.cmd.invoice` | Boleta al entregar un pedido | `q.cmd.invoice.dlq` |
+| DTO | `dto/CommandEnvelope` | Envelope común de los comandos: `type`, `eventId`, `timestamp`, `traceId`, `correlationId` y `payload` |
 
-| Exchange | Tipo | Bindings |
-|---|---|---|
-| `cmd.direct` | direct | `email.send`, `kitchen.ticket`, `invoice.gen` |
-| `cmd.topic` | topic | `email.*`, `kitchen.#`, `invoice.*` |
-| `cmd.dead.dlx` | direct | DLQ de cada cola |
-
-## Buenas prácticas implementadas
-
-- **Envelope común:** `type`, `eventId`, `timestamp`, `traceId`, `correlationId` y `payload`.
-- **ACK/NACK explícitos** (`acknowledge-mode: manual`):
-  - Si el comando se procesa bien → `basicAck`.
-  - Si es inválido o falla → `basicNack` sin reencolar, y RabbitMQ lo mueve a su DLQ.
-- **Idempotencia:** un `eventId` ya procesado se confirma sin repetir el efecto.
-- **Métricas:** contador `pedidos360.notify.commands{queue, result=ok|duplicate|dlq}` en `/actuator/metrics`. La tasa de DLQ también se ve en la Management UI.
-
-El envío real (SMTP, Web Push, impresora, PDF) se simula con logs.
-
-## Variables de entorno
-
-| Variable | Por defecto |
-|---|---|
-| `RABBITMQ_HOST` | `localhost` |
-| `RABBITMQ_PORT` | `5672` |
-| `RABBITMQ_USER` | `pedidos360` |
-| `RABBITMQ_PASSWORD` | `pedidos360` |
-
-## Ejecutar
-
-```bash
-./mvnw test
-./mvnw spring-boot:run
-```
+Puerto reservado: `8083`.
 
 ## Autores
 

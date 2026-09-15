@@ -4,20 +4,9 @@ server:
 spring:
   application:
     name: ms-pedidos360-notify
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:pedidos360}
-    password: ${RABBITMQ_PASSWORD:pedidos360}
-    listener:
-      simple:
-        # ACK/NACK explícitos: el servicio decide si el mensaje se confirma o va a la DLQ
-        acknowledge-mode: manual
-        prefetch: 10
-        missing-queues-fatal: false
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,metrics
+        include: health
