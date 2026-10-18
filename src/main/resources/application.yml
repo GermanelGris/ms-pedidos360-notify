@@ -4,9 +4,47 @@ server:
 spring:
   application:
     name: ms-pedidos360-notify
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:pedidos360}
+    password: ${RABBITMQ_PASSWORD:pedidos360}
+    listener:
+      simple:
+        # ACK/NACK explícitos: cada consumidor decide si confirma, reintenta o envía a la DLQ
+        acknowledge-mode: manual
+        default-requeue-rejected: false
+        prefetch: 10
+        missing-queues-fatal: false
+
+# Única fuente de nombres de RabbitMQ del microservicio: exchanges, colas, DLQ y routing keys.
+pedidos360:
+  rabbitmq:
+    exchanges:
+      commands: cmd.direct        # exchange principal de comandos (direct)
+      retry: cmd.retry            # recibe los mensajes que se reintentan con espera
+      dead-letter: cmd.dead.dlx   # destino de los mensajes rechazados (NACK) -> DLQ
+    retry:
+      max-attempts: 3             # intentos totales ante errores recuperables
+      delay-ms: 5000              # espera entre intentos (TTL de la cola .retry)
+    email:
+      queue: q.cmd.email
+      retry-queue: q.cmd.email.retry
+      dlq: q.cmd.email.dlq
+      routing-key: email.send
+    kitchen:
+      queue: q.cmd.kitchen
+      retry-queue: q.cmd.kitchen.retry
+      dlq: q.cmd.kitchen.dlq
+      routing-key: kitchen.ticket
+    invoice:
+      queue: q.cmd.invoice
+      retry-queue: q.cmd.invoice.retry
+      dlq: q.cmd.invoice.dlq
+      routing-key: invoice.gen
 
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,metrics

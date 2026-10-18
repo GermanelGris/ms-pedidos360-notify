@@ -1,0 +1,56 @@
+# CI/CD de ms-pedidos360-notify
+#  - CI: en cada push y pull request compila y ejecuta las pruebas.
+#  - CD: en cada push a main (con pruebas en verde) entra por SSH a la EC2, actualiza el repo y
+#        reconstruye solo el contenedor "notify" con Docker Compose (infra/apps/compose.yml).
+# Secrets del repositorio: EC2_HOST (IP elástica) y EC2_SSH_KEY (contenido de labsuser.pem).
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Compilar y probar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Pruebas
+        run: |
+          chmod +x mvnw
+          ./mvnw -B verify
+
+  deploy:
+    name: Desplegar en EC2
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Actualizar y reconstruir notify
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          command_timeout: 20m
+          script: |
+            set -e
+            cd ~/pedidos360/ms-pedidos360-notify
+            git pull --ff-only
+            cd ~/pedidos360/infra/apps
+            sudo docker compose up -d --build notify
+            sudo docker image prune -f
+            sudo docker compose ps notify
