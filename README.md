@@ -62,6 +62,16 @@ ERROR [q.cmd.email] Intento 3/3 fallido, sin reintentos disponibles, NACK -> q.c
 ERROR [q.cmd.kitchen] Mensaje no recuperable, NACK -> q.cmd.kitchen.dlq: Falta el campo obligatorio 'items'
 ```
 
+## Listener de las DLQ
+
+`messaging/DeadLetterListener` consume `q.cmd.email.dlq`, `q.cmd.kitchen.dlq` y `q.cmd.invoice.dlq`. Por cada mensaje muerto registra con nivel `ERROR` la cola de origen, el motivo y la cantidad de veces (header `x-death`: `rejected`, `expired` o `maxlen`), el exchange, la routing key, el `messageId` y el payload (hasta 2000 caracteres), y después confirma con ACK:
+
+```
+ERROR DeadLetterListener : DLQ [<dlq>] mensaje muerto: origen=<cola> motivo=rejected veces=1 exchange=<exchange> routingKeys=[<key>] messageId=<id> payload={...}
+```
+
+Un mensaje sin `x-death` es uno que el productor reenvió a la DLQ porque no tenía cola de destino (NO_ROUTE).
+
 ## Variables de entorno
 
 | Variable | Por defecto |
