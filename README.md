@@ -85,7 +85,7 @@ Un mensaje sin `x-death` es uno que el productor reenvió a la DLQ porque no ten
 
 ```bash
 ./mvnw test                 # 15 pruebas: ACK/NACK, reintentos, DLQ, idempotencia y topología
-./mvnw spring-boot:run      # requiere RabbitMQ (infra/local: docker compose up -d rabbitmq)
+./mvnw spring-boot:run      # requiere RabbitMQ (infra/local: docker compose up -d rabbit1 rabbit2)
 ```
 
 ## CI/CD
@@ -94,6 +94,6 @@ Un mensaje sin `x-death` es uno que el productor reenvió a la DLQ porque no ten
 
 ## Autores
 
-Germán Maraboli & Camila Vera
+Germán Marabolí, Sebastián Velez & Camila Vera
 
 Proyecto Pedidos360 · DSY1107 Desarrollo Cloud Native I · Duoc UC
